@@ -1,0 +1,365 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme (default) - Zinc neutrals + Axolotl Blue brand */
+    --color-bg: #FAFAFA;
+    --color-surface: #FFFFFF;
+    --color-border: #E4E4E7;
+    --color-card: #F4F4F5;
+    --color-text-primary: #09090B;
+    --color-text-secondary: #52525B;
+    --color-text-muted: #A1A1AA;
+    --color-brand: #084DE6;
+    --color-brand-bg: #EBF5FF;
+  }
+
+  .dark {
+    /* Dark theme - Zinc neutrals + Axolotl Blue brand */
+    --color-bg: #09090B;
+    --color-surface: #111113;
+    --color-border: #27272A;
+    --color-card: #18181B;
+    --color-text-primary: #FAFAFA;
+    --color-text-secondary: #A1A1AA;
+    --color-text-muted: #52525B;
+    --color-brand-bg: #010B2E;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased bg-[var(--color-bg)] text-[var(--color-text-primary)];
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-[10px] px-4 py-2 text-sm font-medium transition-all duration-150;
+  }
+
+  .input {
+    @apply block w-full rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)];
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar - Zinc palette */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Theme transition */
+body {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Markdown body */
+.markdown-body {
+  word-wrap: break-word;
+  color: var(--color-text-secondary);
+}
+
+.dark.markdown-body {
+  color-scheme: dark;
+}
+
+.markdown-body a {
+  color: var(--color-brand);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================
+   MOBILE NAVIGATION
+   ============================================ */
+
+.desktop-nav {
+  display: flex;
+}
+
+.hamburger-btn {
+  display: none;
+  padding: 8px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 639px) {
+  .desktop-nav {
+    display: none !important;
+  }
+
+  .hamburger-btn {
+    display: flex !important;
+  }
+}
+
+/* ============================================
+   PAGE CONTAINER
+   ============================================ */
+
+.page-container {
+  overflow-x: visible;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px;
+}
+
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding: 20px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 16px 10px;
+  }
+}
+
+/* ============================================
+   SEARCH LAYOUT — sidebar hidden on mobile
+   ============================================ */
+
+.search-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .search-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hide sidebar on mobile by default */
+@media (max-width: 1023px) {
+  .search-sidebar {
+    display: none;
+  }
+
+  .search-sidebar.mobile-open {
+    display: flex !important;
+  }
+}
+
+/* ============================================
+   PLUGIN DETAIL LAYOUT — sidebar below on mobile
+   ============================================ */
+
+.detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+@media (min-width: 768px) {
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    align-items: start;
+  }
+}
+
+/* ============================================
+   PLUGIN GRID — responsive columns
+   ============================================ */
+
+.plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1280px) {
+  .plugin-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .plugin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   HERO RESPONSIVE
+   ============================================ */
+
+.hero-headline {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+@media (min-width: 640px) {
+  .hero-headline {
+    font-size: 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-headline {
+    font-size: 42px;
+  }
+}
+
+.hero-logo {
+  height: 48px;
+  width: auto;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .hero-logo {
+    height: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-logo {
+    height: 64px;
+  }
+}
+
+/* ============================================
+   CTA SECTION RESPONSIVE
+   ============================================ */
+
+.cta-section {
+  padding: 20px;
+  border-radius: 16px;
+}
+
+@media (min-width: 640px) {
+  .cta-section {
+    padding: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cta-section {
+    padding: 40px;
+  }
+}
+
+/* ============================================
+   FOOTER CONTAINER
+   ============================================ */
+
+.footer-container {
+  padding-left: 40px;
+  padding-right: 40px;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+  .footer-container {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer-container {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+/* ============================================
+   GENERAL RESPONSIVE HELPERS
+   ============================================ */
+
+/* Mobile */
+@media (max-width: 767px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Hide on desktop, show on tablet and mobile */
+@media (min-width: 1024px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+}
+
+/* Touch devices */
+@media (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Tables and pre */
+table,
+pre {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Larger version for the public folder, used as default plugin icon placeholder -->
+  <ellipse cx="64" cy="72" rx="40" ry="28" fill="#14b8a6" opacity="0.2"/>
+  <ellipse cx="64" cy="68" rx="32" ry="24" fill="#14b8a6" opacity="0.5"/>
+  <ellipse cx="64" cy="64" rx="24" ry="20" fill="#14b8a6"/>
+  <path d="M28 52 Q20 40 24 28" stroke="#14b8a6" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M36 48 Q32 36 36 24" stroke="#14b8a6" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M100 52 Q108 40 104 28" stroke="#14b8a6" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M92 48 Q96 36 92 24" stroke="#14b8a6" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="52" cy="60" r="6" fill="white"/>
+  <circle cx="76" cy="60" r="6" fill="white"/>
+  <circle cx="53.2" cy="61.2" r="3.2" fill="#0f172a"/>
+  <circle cx="77.2" cy="61.2" r="3.2" fill="#0f172a"/>
+  <!-- Question mark on the body -->
+  <text x="64" y="72" font-family="sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">?</text>
+</svg>
