@@ -16,6 +16,9 @@ permissions:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://poggit-alternative-test.github.io
     steps:
       - name: Checkout
         uses: actions/checkout@v4
