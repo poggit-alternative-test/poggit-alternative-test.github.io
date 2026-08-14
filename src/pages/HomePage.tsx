@@ -146,7 +146,7 @@ export function HomePage() {
           Have a PocketMine-MP plugin? Get it listed by opening a validation issue on GitHub.
         </p>
         <a
-          href="https://github.com/axolotl-pm/plugin-registry/issues/new?template=plugin-submission.yml"
+          href="https://github.com/axolotl-pm/plugin-registry/issues/new?template=submit-plugin.yml"
           target="_blank"
           rel="noopener noreferrer"
         >
