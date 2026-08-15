@@ -21,7 +21,7 @@ const router = createBrowserRouter([
       { path: 'plugins/:slug', element: <PluginDetail /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'login', element: <LoginPage /> },
-      { path: 'auth/callback', element: <AuthCallbackPage /> },
+      { path: 'auth', element: <AuthCallbackPage /> },
       {
         path: 'submit',
         element: (
