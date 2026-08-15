@@ -135,8 +135,8 @@ export function PluginCard({ plugin }: PluginCardProps) {
         >
           {CATEGORY_LABELS[plugin.category]}
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--color-text-muted)' }}>
-          v{plugin.version}
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
+          {plugin.tag || `v${plugin.version}`}
         </span>
       </div>
 

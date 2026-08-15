@@ -9,6 +9,9 @@ export const MOCK_PLUGINS: PluginEntry[] = [
     id: 'cooldogepm/BedrockEconomy',
     name: 'BedrockEconomy',
     version: '4.0.4',
+    tag: 'v4.0.4',
+    all_tags: ['v4.0.4', 'v4.0.3', 'v4.0.2'],
+    dev_build: null,
     api: ['5.0.0'],
     author: ['cooldogepm'],
     description:
@@ -19,7 +22,7 @@ export const MOCK_PLUGINS: PluginEntry[] = [
       'https://raw.githubusercontent.com/cooldogepm/BedrockEconomy/HEAD/icon.png',
     repo_url: 'https://github.com/cooldogepm/BedrockEconomy',
     download_url:
-      'https://github.com/cooldogepm/BedrockEconomy/releases/latest/download/BedrockEconomy.phar',
+      'https://github.com/cooldogepm/BedrockEconomy/releases/download/v4.0.4/BedrockEconomy.phar',
     download_count: 4821,
     build_tier: 'verified',
     attestation_checked_at: '2026-08-11T14:23:00Z',
@@ -31,6 +34,9 @@ export const MOCK_PLUGINS: PluginEntry[] = [
     id: 'nicholass003/TopStats',
     name: 'TopStats',
     version: '1.0.3',
+    tag: 'v1.0.3',
+    all_tags: ['v1.0.3', 'v1.0.2'],
+    dev_build: null,
     api: ['5.0.0'],
     author: ['nicholass003'],
     description:
@@ -41,7 +47,7 @@ export const MOCK_PLUGINS: PluginEntry[] = [
       'https://raw.githubusercontent.com/nicholass003/TopStats/HEAD/assets/icon.png',
     repo_url: 'https://github.com/nicholass003/TopStats',
     download_url:
-      'https://github.com/nicholass003/TopStats/releases/latest/download/TopStats.phar',
+      'https://github.com/nicholass003/TopStats/releases/download/v1.0.3/TopStats.phar',
     download_count: 934,
     build_tier: 'built-via-ci',
     attestation_checked_at: '2026-08-10T08:11:00Z',
@@ -51,8 +57,11 @@ export const MOCK_PLUGINS: PluginEntry[] = [
   },
   {
     id: 'IvanCraft623/RankSystem',
-    name: 'ChatColors',
+    name: 'RankSystem',
     version: '1.2.1',
+    tag: 'v1.2.1',
+    all_tags: ['v1.2.1'],
+    dev_build: null,
     api: ['5.36.0'],
     author: ['IvanCraft623'],
     description:
@@ -63,7 +72,7 @@ export const MOCK_PLUGINS: PluginEntry[] = [
       'https://raw.githubusercontent.com/IvanCraft623/RankSystem/HEAD/icon.png',
     repo_url: 'https://github.com/IvanCraft623/RankSystem',
     download_url:
-      'https://github.com/IvanCraft623/RankSystem/releases/latest/download/ChatColors.phar',
+      'https://github.com/IvanCraft623/RankSystem/releases/download/v1.2.1/RankSystem.phar',
     download_count: 317,
     build_tier: 'unverified',
     attestation_checked_at: '2026-08-09T19:45:00Z',
@@ -75,16 +84,23 @@ export const MOCK_PLUGINS: PluginEntry[] = [
     id: 'nicholass003/Textify',
     name: 'Textify',
     version: '0.0.1',
+    tag: 'nightly',
+    all_tags: ['nightly', 'v0.0.1'],
+    dev_build: {
+      tag: 'nightly-20240815',
+      download_url:
+        'https://github.com/nicholass003/Textify/releases/download/nightly-20240815/Textify.phar',
+    },
     api: ['5.0.0'],
     author: ['nicholass003'],
     description:
       'A shared virion library providing common utilities for PocketMine plugins. Provides event routing, configuration helpers, and async task scheduling.',
     category: 'api',
     icon_path: null,
-    icon_url: null, // no assets/icon.png in this repo — will fall back to default
+    icon_url: null,
     repo_url: 'https://github.com/nicholass003/Textify',
     download_url:
-      'https://github.com/nicholass003/Textify/releases/latest/download/Textify.phar',
+      'https://github.com/nicholass003/Textify/releases/download/nightly-20240815/Textify.phar',
     download_count: 55,
     build_tier: null,
     attestation_checked_at: null,
@@ -96,6 +112,9 @@ export const MOCK_PLUGINS: PluginEntry[] = [
     id: 'GonePrivate/ClaimPlugin',
     name: 'ClaimPlugin',
     version: '4.1.2',
+    tag: 'v4.1.2',
+    all_tags: ['v4.1.2'],
+    dev_build: null,
     api: ['5.0.0'],
     author: ['SecretDev'],
     description: 'Land claim and anti-grief protection system.',
@@ -105,7 +124,7 @@ export const MOCK_PLUGINS: PluginEntry[] = [
       'https://raw.githubusercontent.com/GonePrivate/ClaimPlugin/HEAD/resources/icon.png',
     repo_url: 'https://github.com/GonePrivate/ClaimPlugin',
     download_url:
-      'https://github.com/GonePrivate/ClaimPlugin/releases/latest/download/ClaimPlugin.phar',
+      'https://github.com/GonePrivate/ClaimPlugin/releases/download/v4.1.2/ClaimPlugin.phar',
     download_count: 1205,
     build_tier: 'built-via-ci',
     attestation_checked_at: '2026-08-08T12:00:00Z',

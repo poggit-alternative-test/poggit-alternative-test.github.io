@@ -85,9 +85,6 @@ export function Header() {
             <NavLink to="/" end style={({ isActive }) => navLinkStyle(isActive)}>
               Browse
             </NavLink>
-            <NavLink to="/search" style={({ isActive }) => navLinkStyle(isActive)}>
-              Search
-            </NavLink>
             <NavLink to="/plugins" style={({ isActive }) => navLinkStyle(isActive)}>
               Plugins
             </NavLink>
@@ -101,10 +98,10 @@ export function Header() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {/* Search icon — desktop only */}
           <Link
-            to="/search"
+            to="/plugins"
             className="hide-on-tablet"
             style={iconBtnStyle}
-            aria-label="Search plugins"
+            aria-label="Browse plugins"
           >
             <Search size={18} />
           </Link>
@@ -149,26 +146,6 @@ export function Header() {
             gap: '4px',
           }}
         >
-          {/* Search link */}
-          <Link
-            to="/search"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              color: colors.textPrimary,
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
-          >
-            <Search size={16} />
-            Search
-          </Link>
-
           <Link
             to="/"
             onClick={() => setMobileMenuOpen(false)}
@@ -202,7 +179,8 @@ export function Header() {
               fontWeight: 500,
             }}
           >
-            Browse Plugins
+            <Search size={16} />
+            Plugins
           </Link>
           <Link
             to="/about"

@@ -1,8 +1,7 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { RootLayout } from '@/layouts/RootLayout';
 import { HomePage } from '@/pages/HomePage';
 import { SearchPage } from '@/pages/SearchPage';
-import { PluginsPage } from '@/pages/PluginsPage';
 import { PluginDetail } from '@/pages/PluginDetail';
 import { AboutPage } from '@/pages/AboutPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -17,8 +16,8 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'search', element: <SearchPage /> },
-      { path: 'plugins', element: <PluginsPage /> },
+      { path: 'plugins', element: <SearchPage /> },
+      { path: 'search', element: <Navigate to="/plugins" replace /> },
       { path: 'plugins/:slug', element: <PluginDetail /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'login', element: <LoginPage /> },

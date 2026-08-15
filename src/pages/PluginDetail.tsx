@@ -1,17 +1,27 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Github, Download, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Github, Download, ArrowLeft, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Badge } from '@/components/Badge';
 import { CATEGORY_LABELS } from '@/types/plugin';
+import { resolveIconUrl } from '@/lib/iconResolver';
 import { useRegistry } from '@/hooks/useRegistry';
 import type { PluginEntry } from '@/types/plugin';
+
+/** Version option shown in the version selector */
+interface VersionOption {
+  tag: string;
+  label: string;
+  download_url: string;
+  isNightly?: boolean;
+}
 
 export function PluginDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { colors } = useTheme();
   const { plugins, loading, error } = useRegistry();
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
+  const [showVersionMenu, setShowVersionMenu] = useState(false);
 
   const plugin: PluginEntry | undefined = plugins.find(
     p => decodeURIComponent(slug ?? '') === p.id,
@@ -93,14 +103,30 @@ export function PluginDetail() {
     );
   }
 
-  const releaseUrl = plugin.download_url || `https://github.com/${plugin.id}/releases/latest`;
+  const isUnavailable = plugin.unavailable === true;
+
+  // Build version options: stable releases from all_tags + dev_build as a single list
+  const versionOptions: VersionOption[] = [
+    ...(plugin.all_tags ?? []).map(tag => ({
+      tag,
+      label: tag,
+      download_url: `https://github.com/${plugin.id}/releases/download/${tag}/${plugin.name}.phar`,
+    })),
+    ...(plugin.dev_build ? [{
+      tag: plugin.dev_build.tag,
+      label: `${plugin.dev_build.tag} (Dev)`,
+      download_url: plugin.dev_build.download_url,
+      isNightly: true,
+    }] : []),
+  ];
+
+  const currentTag = plugin.tag || plugin.version;
+  const currentDownloadUrl = plugin.download_url || `https://github.com/${plugin.id}/releases/latest`;
+
   const iconUrl = (() => {
     if (imgError[plugin.id]) return null;
-    if (plugin.icon_url) return plugin.icon_url;
-    return null;
+    return resolveIconUrl(plugin);
   })();
-
-  const isUnavailable = plugin.unavailable === true;
 
   return (
     <div className="page-container" style={{ paddingTop: '32px' }}>
@@ -182,7 +208,7 @@ export function PluginDetail() {
               </div>
 
               <p style={{ fontSize: '13px', color: colors.textSecondary, marginBottom: '8px' }}>
-                by {plugin.author.join(', ')} • v{plugin.version} • API {plugin.api.join(', ')}
+                by {plugin.author.join(', ')} • API {plugin.api.join(', ')}
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -233,10 +259,11 @@ export function PluginDetail() {
 
         {/* Sidebar */}
         <aside style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* Download button */}
+
+          {/* Download button — standalone */}
           {!isUnavailable && (
             <a
-              href={releaseUrl}
+              href={currentDownloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -253,18 +280,122 @@ export function PluginDetail() {
                 fontSize: '14px',
                 fontWeight: 600,
                 textDecoration: 'none',
-                transition: 'background-color 0.15s ease',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#0137C1';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = colors.brand;
               }}
             >
               <Download size={16} />
-              Download Latest Release
+              Download {currentTag}
             </a>
+          )}
+
+          {/* Version dropdown — separate toggleable section */}
+          {versionOptions.length > 1 && (
+            <div style={{
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.card,
+              overflow: 'hidden',
+              borderRadius: '10px',
+            }}>
+              {/* Toggle button */}
+              <button
+                onClick={() => setShowVersionMenu(!showVersionMenu)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '10px 14px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: colors.textPrimary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderBottom: showVersionMenu ? 'none' : `1px solid ${colors.border}`,
+                  cursor: 'pointer',
+                }}
+              >
+                <span>RELEASE BUILD</span>
+                <ChevronDown
+                  size={12}
+                  style={{
+                    transform: showVersionMenu ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.15s ease',
+                  }}
+                />
+              </button>
+
+              {/* Dropdown options */}
+              {showVersionMenu && (
+                <div>
+                  {versionOptions.map((opt, idx) => (
+                    <a
+                      key={opt.tag}
+                      href={opt.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        fontSize: '13px',
+                        color: opt.tag === currentTag ? colors.textPrimary : colors.textSecondary,
+                        textDecoration: 'none',
+                        borderBottom: idx < versionOptions.length - 1 ? `1px solid ${colors.border}` : 'none',
+                        backgroundColor: opt.tag === currentTag ? `${colors.brand}10` : 'transparent',
+                      }}
+                      onMouseEnter={e => {
+                        if (opt.tag !== currentTag) {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = colors.border;
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor =
+                          opt.tag === currentTag ? `${colors.brand}10` : 'transparent';
+                      }}
+                    >
+                      {/* Left: version tag */}
+                      <span style={{ fontFamily: 'monospace' }}>
+                        {opt.label}
+                      </span>
+
+                      {/* Right: badge + checkmark */}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {opt.isNightly ? (
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: '#7C3AED',
+                            backgroundColor: '#EDE9FE',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                          }}>
+                            nightly
+                          </span>
+                        ) : opt.tag === currentTag ? (
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: '#16A34A',
+                            backgroundColor: '#DCFCE7',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                          }}>
+                            latest
+                          </span>
+                        ) : null}
+                        {opt.tag === currentTag && (
+                          <span style={{ fontSize: '12px', color: colors.textMuted }}>
+                            ✓
+                          </span>
+                        )}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* View on GitHub */}
@@ -314,11 +445,12 @@ export function PluginDetail() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                { label: 'Version', value: plugin.version },
+                { label: 'Version', value: plugin.tag || plugin.version },
                 { label: 'API', value: plugin.api.join(', ') },
                 { label: 'Category', value: CATEGORY_LABELS[plugin.category] },
                 { label: 'Authors', value: plugin.author.join(', ') },
                 { label: 'Build', value: plugin.build_tier ?? 'unknown' },
+                { label: 'Tags', value: `${(plugin.all_tags ?? []).length} submitted` },
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '12px', color: colors.textMuted }}>{label}</span>

@@ -2,6 +2,14 @@
  * Plugin entry type — mirrors schema/plugin-entry.schema.json.
  * All plugin.yml-derived fields are re-fetched and overwritten by the
  * sync workflow on every run; never trusted from a submission body.
+ *
+ * Versioning:
+ * - `tag` is the full Git tag (e.g. "v1.2.0" or "nightly"), includes any "v" prefix.
+ * - `version` is the tag stripped of the leading "v" (e.g. "1.2.0").
+ * - `all_tags` lists all submitted stable release tags (newest first), managed
+ *   by the approval workflow only — the sync workflow never modifies it.
+ * - `dev_build` holds the nightly build info when tag === "nightly"; only set
+ *   by the approval workflow — the sync workflow never modifies it.
  */
 export interface PluginEntry {
   /** GitHub owner/repo slug — stable unique identifier */
@@ -10,8 +18,29 @@ export interface PluginEntry {
   /** Plugin name, sourced from plugin.yml name field on every sync */
   name: string;
 
-  /** Latest version string from the most recent GitHub Release tag */
+  /** Version string from the most recent GitHub Release tag (stripped of leading 'v') */
   version: string;
+
+  /** Full Git tag of the latest approved release (e.g. "v1.2.0" or "nightly") */
+  tag: string;
+
+  /**
+   * All submitted stable release tags in chronological order (newest first).
+   * Only includes tags that were submitted via the approval workflow.
+   * The sync workflow never modifies this field.
+   */
+  all_tags: string[];
+
+  /**
+   * Latest dev/nightly build info. Only populated when tag === "nightly".
+   * Set by the approval workflow; the sync workflow never modifies it.
+   */
+  dev_build: {
+    /** The nightly build tag (e.g. "nightly-20240815") */
+    tag: string;
+    /** URL to the nightly .phar asset */
+    download_url: string;
+  } | null;
 
   /** PocketMine API version strings, from plugin.yml api field */
   api: string[];
@@ -28,14 +57,14 @@ export interface PluginEntry {
   /**
    * Relative path to the icon file inside the plugin's repo, as submitted.
    * Null means no explicit path was submitted — the sync workflow will
-   * attempt the assets/icon.png convention path as the first fallback.
+   * attempt icon.png then assets/icon.png as fallbacks.
    */
   icon_path: string | null;
 
   /**
    * Resolved raw.githubusercontent.com URL for the icon.
-   * Uses the three-tier fallback: submitted path → assets/icon.png → Axolotl default.
-   * Null only if the registry's own default icon also failed to resolve.
+   * Uses the four-tier fallback: submitted path → icon.png → assets/icon.png
+   * → Axolotl default. Null only if all four tiers failed.
    */
   icon_url: string | null;
 
