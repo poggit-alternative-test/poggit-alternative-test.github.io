@@ -1,47 +1,26 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { handleOAuthCallback } from '@/lib/auth';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 /**
- * /auth — OAuth callback page.
+ * /auth — legacy callback route (kept for backward compat).
  *
- * GitHub redirects here (to the root URL) with ?code= and ?state= params.
- * This page handles the token exchange and sets the authenticated user.
+ * The real OAuth callback is handled in main.tsx before React renders.
+ * This page is a fallback/loading state for the /auth path.
  */
 export function AuthCallbackPage() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { status } = useAuth();
   const { colors } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const state = searchParams.get('state');
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-
-    if (error) {
-      navigate(`/login?error=${encodeURIComponent(errorDescription || error)}`, { replace: true });
-      return;
+    if (status === 'authenticated') {
+      navigate('/', { replace: true });
+    } else if (status === 'idle' || status === 'error') {
+      navigate('/login', { replace: true });
     }
-
-    if (!code || !state) {
-      navigate('/login?error=missing_params', { replace: true });
-      return;
-    }
-
-    handleOAuthCallback(code, state)
-      .then((user) => {
-        setUser(user);
-        navigate('/', { replace: true });
-      })
-      .catch((err) => {
-        console.error('OAuth failed:', err);
-        navigate(`/login?error=${encodeURIComponent(err.message)}`, { replace: true });
-      });
-  }, [searchParams, navigate, setUser]);
+  }, [status, navigate]);
 
   return (
     <div
