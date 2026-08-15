@@ -1,40 +1,27 @@
 /**
- * GitHub Device Flow helpers.
+ * GitHub OAuth 2.0 Authorization Code + PKCE flow.
  *
- * Flow overview:
- *  1. POST to /login/device/code  → { device_code, user_code, verification_uri }
- *  2. Open verification_uri for the user, they enter user_code
- *  3. Poll POST to /login/oauth/access_token with device_code + code_verifier
- *     until { access_token } arrives or error != "authorization_pending"
+ * Flow:
+ *  1. startOAuthLogin() → generates verifier + challenge + state → redirects to GitHub
+ *  2. GitHub redirects back to /auth/callback?code=...&state=...
+ *  3. handleOAuthCallback(code, state) → exchanges code for token → returns user
  *
- * PKCE is used for the token exchange to avoid transmitting the code_challenge
- * directly.  The code_verifier is generated once per flow and stored in sessionStorage
- * only during the polling window — it is cleared the moment a token is received
- * (or the flow times out).  The token itself is NEVER persisted.
+ * Security contract:
+ *  • PKCE verifier only in sessionStorage (ephemeral, cleared on tab close)
+ *  • State parameter for CSRF protection
+ *  • Token in React state only (never localStorage)
+ *  • No client secret in frontend
  */
 
 import {
-  GITHUB_CLIENT_ID,
-  GITHUB_DEVICE_CODE_URL,
+  GITHUB_OAUTH_URL,
   GITHUB_TOKEN_URL,
-  GITHUB_USER_URL,
+  GITHUB_API_USER,
+  GITHUB_CALLBACK_URL,
+  GITHUB_SCOPES,
+  GITHUB_CLIENT_ID,
 } from '@/config/github';
-
-/** Data returned from step 1 of the device flow. */
-export interface DeviceCodeResponse {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  interval: number; // seconds to wait between polls
-  expires_in: number; // seconds until the device_code expires
-}
-
-/** Data returned from step 3 (token exchange). */
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  scope: string;
-}
+import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce';
 
 /** Normalised GitHub user profile. */
 export interface GitHubUser {
@@ -45,151 +32,90 @@ export interface GitHubUser {
   html_url: string;
 }
 
-// ── PKCE helpers ────────────────────────────────────────────────────────────
-
-/**
- * Generate a cryptographically random code_verifier for PKCE.
- * Matches OAuth 2.0 §4.1 requirements: 43–128 chars from [A-Z] [a-z] [0-9] "-" "." "_" "~"
- */
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(64);
-  crypto.getRandomValues(array);
-  return btoa(String.fromCharCode(...array))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '~')
-    .slice(0, 128);
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  scope: string;
 }
 
-/**
- * Derive the S256 code_challenge from a code_verifier.
- * OAuth 2.0 §4.1: BASE64URL(SHA256(ASCII(code_verifier)))
- */
-async function deriveCodeChallenge(verifier: string): Promise<string> {
-  const data = new TextEncoder().encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
-// ── Step 1: initiate device flow ────────────────────────────────────────────
+// ── Step 1: redirect to GitHub ────────────────────────────────────────────────
 
 /**
- * Request a device code from GitHub.
- * Opens the verification page automatically and returns the user code + polling data.
+ * Redirect the browser to GitHub's OAuth authorization page.
+ * Stores verifier and state in sessionStorage for the callback.
  */
-export async function initiateDeviceFlow(): Promise<{
-  deviceCodeResponse: DeviceCodeResponse;
-  codeVerifier: string;
-}> {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = await deriveCodeChallenge(codeVerifier);
+export async function startOAuthLogin(): Promise<void> {
+  const verifier = generateCodeVerifier();
+  const challenge = await generateCodeChallenge(verifier);
+  const state = generateState();
+
+  sessionStorage.setItem('oauth_verifier', verifier);
+  sessionStorage.setItem('oauth_state', state);
 
   const params = new URLSearchParams({
     client_id: GITHUB_CLIENT_ID,
-    scope: 'read:user',
-    code_challenge: codeChallenge,
+    redirect_uri: GITHUB_CALLBACK_URL,
+    scope: GITHUB_SCOPES,
+    response_type: 'code',
+    code_challenge: challenge,
     code_challenge_method: 'S256',
+    state,
   });
 
-  const response = await fetch(GITHUB_DEVICE_CODE_URL, {
+  window.location.href = `${GITHUB_OAUTH_URL}?${params}`;
+}
+
+// ── Step 2: exchange code for token ──────────────────────────────────────────
+
+/**
+ * Handle the OAuth callback — validate state, exchange code for token, return user.
+ * Call this from the /auth/callback page.
+ */
+export async function handleOAuthCallback(
+  code: string,
+  state: string
+): Promise<GitHubUser> {
+  // 1. Validate state (CSRF protection)
+  const storedState = sessionStorage.getItem('oauth_state');
+  const storedVerifier = sessionStorage.getItem('oauth_verifier');
+  sessionStorage.removeItem('oauth_state');
+  sessionStorage.removeItem('oauth_verifier');
+
+  if (!state || state !== storedState) {
+    throw new Error('OAuth state mismatch (CSRF protection)');
+  }
+  if (!storedVerifier) {
+    throw new Error('Missing PKCE verifier — session may have expired');
+  }
+
+  // 2. Exchange code for token
+  const tokenRes = await fetch(GITHUB_TOKEN_URL, {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.fromEntries(params)),
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      client_id: GITHUB_CLIENT_ID,
+      code,
+      code_verifier: storedVerifier,
+      redirect_uri: GITHUB_CALLBACK_URL,
+    }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Device code request failed: HTTP ${response.status}`);
+  if (!tokenRes.ok) {
+    throw new Error('Token exchange failed');
   }
 
-  const json = (await response.json()) as Record<string, unknown>;
+  const tokenData: TokenResponse = await tokenRes.json();
+  const accessToken = tokenData.access_token;
 
-  // GitHub returns error responses as 200 OK with an "error" field.
-  if ('error' in json) {
-    throw new Error(`Device flow error: ${json.error}`);
+  if (!accessToken) {
+    throw new Error('No access token received');
   }
 
-  const deviceCodeResponse = json as unknown as DeviceCodeResponse;
-
-  return { deviceCodeResponse, codeVerifier };
-}
-
-// ── Step 3: poll for access token ───────────────────────────────────────────
-
-/**
- * Poll GitHub for the access token.
- * Calls `onProgress` with each status update.
- * Resolves with the token on success, rejects with an Error on terminal failure.
- *
- * Terminal errors: "authorization_declined" | "bad_verification_code" | ...
- * Non-terminal: "authorization_pending" (keep polling) | "slow_down" (wait longer)
- */
-export async function pollForToken(
-  deviceCode: string,
-  codeVerifier: string,
-  intervalSeconds: number,
-  onProgress: (status: string, userCode?: string) => void,
-): Promise<TokenResponse> {
-  const params = new URLSearchParams({
-    client_id: GITHUB_CLIENT_ID,
-    device_code: deviceCode,
-    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    code_verifier: codeVerifier,
-  });
-
-  const poll = async (waitMs: number): Promise<TokenResponse> => {
-    await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
-
-    const response = await fetch(GITHUB_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token poll request failed: HTTP ${response.status}`);
-    }
-
-    const json = (await response.json()) as Record<string, unknown>;
-
-    // "authorization_pending" means keep polling.
-    if (json.error === 'authorization_pending') {
-      onProgress('waiting');
-      return poll(waitMs);
-    }
-
-    // "slow_down" means GitHub wants us to wait longer.
-    if (json.error === 'slow_down') {
-      onProgress('slow_down');
-      // Default interval + 5 s when slow_down is returned.
-      return poll((waitMs + 5000) * 1000);
-    }
-
-    // Any other error (including "authorization_declined") is terminal.
-    if ('error' in json) {
-      throw new Error(`Token exchange failed: ${json.error}`);
-    }
-
-    // Success — access_token is present.
-    onProgress('success');
-    return json as unknown as TokenResponse;
-  };
-
-  return poll(intervalSeconds * 1000);
-}
-
-// ── Fetch user profile ────────────────────────────────────────────────────────
-
-/**
- * Fetch the authenticated user's profile from the GitHub API.
- */
-export async function fetchGitHubUser(accessToken: string): Promise<GitHubUser> {
-  const response = await fetch(GITHUB_USER_URL, {
+  // 3. Fetch user info
+  const userRes = await fetch(GITHUB_API_USER, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/vnd.github+json',
@@ -197,9 +123,9 @@ export async function fetchGitHubUser(accessToken: string): Promise<GitHubUser> 
     },
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user: HTTP ${response.status}`);
+  if (!userRes.ok) {
+    throw new Error('Failed to fetch user info');
   }
 
-  return response.json() as Promise<GitHubUser>;
+  return userRes.json() as Promise<GitHubUser>;
 }

@@ -1,31 +1,46 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { handleOAuthCallback } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 /**
- * /auth/callback — placeholder for redirect-based OAuth flows.
+ * /auth/callback — handles the OAuth redirect from GitHub.
  *
- * The device flow (Phase 6) does not use this page — auth completes in the
- * same tab where "Login with GitHub" was clicked.
- *
- * This page exists so the redirect URI can be pre-registered for future
- * Authorization Code + PKCE flows (e.g. for more granular GitHub App permissions).
- *
- * For now it simply redirects home.
+ * Reads ?code= and &state= from the URL, validates the state (CSRF),
+ * exchanges the code for a token, and sets the authenticated user.
  */
 export function AuthCallbackPage() {
-  const { status } = useAuth();
-  const { colors } = useTheme();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { setUser } = useAuth();
+  const { colors } = useTheme();
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      navigate('/', { replace: true });
-    } else if (status === 'idle' || status === 'error') {
-      navigate('/login', { replace: true });
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const error = searchParams.get('error');
+
+    if (error) {
+      navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
+      return;
     }
-  }, [status, navigate]);
+
+    if (!code || !state) {
+      navigate('/login?error=missing_params', { replace: true });
+      return;
+    }
+
+    handleOAuthCallback(code, state)
+      .then((user) => {
+        setUser(user);
+        navigate('/', { replace: true });
+      })
+      .catch((err) => {
+        console.error('OAuth failed:', err);
+        navigate('/login?error=auth_failed', { replace: true });
+      });
+  }, [searchParams, navigate, setUser]);
 
   return (
     <div

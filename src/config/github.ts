@@ -1,20 +1,17 @@
 /**
  * GitHub App configuration.
  *
- * Note: App ID and Client ID are public identifiers (OAuth public client).
- * They are safe to commit. Only the Client Secret (not used in Device Flow)
- * must be kept private.
+ * PKCE OAuth 2.0 Authorization Code Flow for GitHub OAuth App.
+ * Safe: no client secret in frontend, PKCE verifier in sessionStorage only.
  */
 export const GITHUB_APP_ID = '4583852';
 export const GITHUB_CLIENT_ID = 'Iv23liA6vrsnFbgUtBfh';
 
-/**
- * GitHub Device Authorization endpoint.
- * See: https://docs.github.com/en/developers/apps/building-github-apps/authorizing-github-apps-with-device-flow
- */
-export const GITHUB_DEVICE_CODE_URL = 'https://github.com/login/device/code';
+/** GitHub OAuth endpoints */
+export const GITHUB_OAUTH_URL = 'https://github.com/login/oauth/authorize';
 export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
-export const GITHUB_USER_URL = 'https://api.github.com/user';
+export const GITHUB_API_USER = 'https://api.github.com/user';
+export const GITHUB_CALLBACK_URL = 'https://poggit-alternative-test.github.io/api/auth/callback';
 
-/** Scope required for read-only plugin submission operations. */
-export const GITHUB_SCOPES = 'read:user';
+/** OAuth scopes — least privilege */
+export const GITHUB_SCOPES = 'read:user repo';
