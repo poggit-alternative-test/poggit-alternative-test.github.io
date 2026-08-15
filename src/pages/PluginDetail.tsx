@@ -385,11 +385,6 @@ export function PluginDetail() {
                             latest
                           </span>
                         ) : null}
-                        {opt.tag === currentTag && (
-                          <span style={{ fontSize: '12px', color: colors.textMuted }}>
-                            ✓
-                          </span>
-                        )}
                       </span>
                     </a>
                   ))}
