@@ -27,6 +27,12 @@ export const REGISTRY_REPO = 'poggit-alternative-test/plugin-registry';
 
 /**
  * Base URL for raw content from the registry repo.
+ * Uses /HEAD/ — GitHub resolves this to the default branch server-side.
  */
 export const REGISTRY_RAW_BASE =
-  'https://raw.githubusercontent.com/poggit-alternative-test/plugin-registry/main';
+  'https://raw.githubusercontent.com/poggit-alternative-test/plugin-registry/HEAD';
+
+/**
+ * URL for the plugin index JSON.
+ */
+export const REGISTRY_INDEX_URL = `${REGISTRY_RAW_BASE}/data/index.json`;

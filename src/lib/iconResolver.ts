@@ -1,11 +1,11 @@
 /**
- * Icon URL resolver — implements the three-tier fallback defined in
- * ARCHITECTURE.md §2.
+ * Icon URL resolver — implements the four-tier fallback.
  *
  * Resolution order:
  *   1. Developer-submitted icon_path  → raw.githubusercontent.com URL
- *   2. Convention path assets/icon.png → raw.githubusercontent.com URL
- *   3. Axolotl default icon (DEFAULT_PLUGIN_ICON constant)
+ *   2. icon.png (common convention)   → raw.githubusercontent.com URL
+ *   3. assets/icon.png convention     → raw.githubusercontent.com URL
+ *   4. Axolotl default icon          → DEFAULT_PLUGIN_ICON constant
  *
  * All URLs use /HEAD/ in place of a branch name so GitHub resolves
  * server-side — no API call needed to look up the default branch.
@@ -34,11 +34,15 @@ export function resolveIconUrl(plugin: PluginEntry): string {
     // Path was provided but produced an invalid URL — fall through
   }
 
-  // Tier 2: convention path assets/icon.png
-  const conventionUrl = buildRawUrl(plugin.id, 'assets/icon.png');
-  if (conventionUrl != null) return conventionUrl;
+  // Tier 2: icon.png (first fallback)
+  const iconPngUrl = buildRawUrl(plugin.id, 'icon.png');
+  if (iconPngUrl != null) return iconPngUrl;
 
-  // Tier 3: Axolotl default icon
+  // Tier 3: assets/icon.png (second fallback)
+  const assetsIconUrl = buildRawUrl(plugin.id, 'assets/icon.png');
+  if (assetsIconUrl != null) return assetsIconUrl;
+
+  // Tier 4: Axolotl default icon
   return DEFAULT_PLUGIN_ICON;
 }
 
