@@ -38,7 +38,26 @@ export function useRegistry(): UseRegistryResult {
         }
 
         if (!cancelled) {
-          setPlugins(data as PluginEntry[]);
+          // Sort: featured first (by featured_marked_at descending), then by approved_at descending
+          const sorted = (data as PluginEntry[]).sort((a, b) => {
+            // Featured plugins first
+            if (a.featured && !b.featured) return -1;
+            if (!a.featured && b.featured) return 1;
+
+            // Within featured: sort by featured_marked_at (newest first)
+            if (a.featured && b.featured) {
+              const aTime = a.featured_marked_at ? new Date(a.featured_marked_at).getTime() : 0;
+              const bTime = b.featured_marked_at ? new Date(b.featured_marked_at).getTime() : 0;
+              return bTime - aTime;
+            }
+
+            // Within non-featured: sort by approved_at (newest first)
+            const aTime = new Date(a.approved_at).getTime();
+            const bTime = new Date(b.approved_at).getTime();
+            return bTime - aTime;
+          });
+
+          setPlugins(sorted);
           setError(null);
         }
       } catch (err) {

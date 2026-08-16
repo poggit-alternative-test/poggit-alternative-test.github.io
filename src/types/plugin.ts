@@ -103,6 +103,15 @@ export interface PluginEntry {
    * or the .phar asset is otherwise inaccessible.
    */
   unavailable?: boolean;
+
+  /** True if this plugin is featured. Featured plugins are sorted to the top. */
+  featured: boolean;
+
+  /** ISO 8601 timestamp when the featured label was added. */
+  featured_marked_at: string | null;
+
+  /** User-submitted keywords for search. */
+  keywords: string[];
 }
 
 /** All accepted category values */

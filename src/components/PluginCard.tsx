@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Download, AlertCircle, Star } from 'lucide-react';
 import type { PluginEntry } from '../types/plugin';
 import { CATEGORY_LABELS } from '../types/plugin';
-import { Badge } from './Badge';
+import { Badge, FeaturedBadge } from './Badge';
 import { resolveIconUrl } from '../lib/iconResolver';
 
 interface PluginCardProps {
@@ -116,8 +116,9 @@ export function PluginCard({ plugin }: PluginCardProps) {
         </p>
       )}
 
-      {/* Footer: badge + category + version */}
+      {/* Footer: featured badge + tier badge + category + version */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {plugin.featured && <FeaturedBadge />}
         <Badge tier={plugin.build_tier} />
         <span
           style={{

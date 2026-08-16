@@ -21,7 +21,8 @@ export function SearchPage() {
         !query ||
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         p.description.toLowerCase().includes(query.toLowerCase()) ||
-        p.author.some(a => a.toLowerCase().includes(query.toLowerCase()));
+        p.author.some(a => a.toLowerCase().includes(query.toLowerCase())) ||
+        p.keywords?.some(k => k.toLowerCase().includes(query.toLowerCase()));
       const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
       return matchesQuery && matchesCategory && !p.unavailable;
     });

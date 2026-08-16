@@ -1,4 +1,4 @@
-import { CheckCircle2, Cpu, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Cpu, AlertTriangle, Star } from 'lucide-react';
 import type { BuildTier } from '../types/plugin';
 
 /**
@@ -29,7 +29,7 @@ export function Badge({ tier }: { tier: BuildTier }) {
           }}
         >
           <CheckCircle2 size={12} />
-          Verified build
+          Verified
         </span>
       );
     case 'built-via-ci':
@@ -81,4 +81,33 @@ export function Badge({ tier }: { tier: BuildTier }) {
     default:
       return null;
   }
+}
+
+/**
+ * Renders the featured badge for a plugin.
+ * Gold star badge for featured plugins.
+ */
+export function FeaturedBadge() {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        borderRadius: '9999px',
+        paddingLeft: '8px',
+        paddingRight: '8px',
+        paddingTop: '2px',
+        paddingBottom: '2px',
+        fontSize: '11px',
+        fontWeight: 500,
+        backgroundColor: '#FEF9C3',
+        color: '#854D0E',
+        border: '1px solid #FCD34D',
+      }}
+    >
+      <Star size={12} style={{ fill: '#EAB308' }} />
+      Featured
+    </span>
+  );
 }
