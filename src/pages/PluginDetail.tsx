@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Github, Download, ArrowLeft, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
+import { Github, Download, ArrowLeft, AlertCircle, Loader2, ChevronDown, Star } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Badge } from '@/components/Badge';
 import { CATEGORY_LABELS } from '@/types/plugin';
@@ -240,21 +240,38 @@ export function PluginDetail() {
             </section>
           )}
 
-          {/* Download stats */}
-          {plugin.download_count != null && (
-            <section style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, color: colors.textPrimary, marginBottom: '12px' }}>
-                Downloads
+          {/* Stats: downloads + stars */}
+          <section style={{ marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: colors.textPrimary, marginBottom: '16px' }}>
+                Stats
               </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Download size={16} style={{ color: colors.textMuted }} />
-                <span style={{ fontSize: '20px', fontWeight: 700, color: colors.textPrimary }}>
-                  {plugin.download_count.toLocaleString()}
-                </span>
-                <span style={{ fontSize: '13px', color: colors.textMuted }}>total downloads</span>
+              <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Download size={16} style={{ color: colors.textMuted }} />
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: colors.textPrimary,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {(plugin.download_count != null ? plugin.download_count : 0).toLocaleString()}
+                  </span>
+                  <span style={{ fontSize: '13px', color: colors.textMuted }}>downloads</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Star size={16} style={{ color: colors.textMuted, fill: colors.textMuted }} />
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: colors.textPrimary,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {(plugin.stargazers_count >= 0 ? plugin.stargazers_count : 0).toLocaleString()}
+                  </span>
+                  <span style={{ fontSize: '13px', color: colors.textMuted }}>stars</span>
+                </div>
               </div>
             </section>
-          )}
         </div>
 
         {/* Sidebar */}

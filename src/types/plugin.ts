@@ -80,6 +80,9 @@ export interface PluginEntry {
   /** Total GitHub Release asset download count, null if unavailable */
   download_count: number | null;
 
+  /** GitHub repository star count, defaults to 0 if not available */
+  stargazers_count: number;
+
   /** Badge tier, null if the check has never run or the release is unavailable */
   build_tier: BuildTier;
 

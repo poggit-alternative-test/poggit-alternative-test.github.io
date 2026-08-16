@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Download, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle, Star } from 'lucide-react';
 import type { PluginEntry } from '../types/plugin';
 import { CATEGORY_LABELS } from '../types/plugin';
 import { Badge } from './Badge';
@@ -140,13 +140,39 @@ export function PluginCard({ plugin }: PluginCardProps) {
         </span>
       </div>
 
-      {/* Download count */}
-      {plugin.download_count != null && !isUnavailable && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
+      {/* Stats row: downloads + stars */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        paddingTop: '4px',
+        borderTop: `1px solid var(--color-border)`,
+      }}>
+        <span style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          fontSize: '13px',
+          color: 'var(--color-text-muted)',
+        }}>
           <Download size={13} />
-          {plugin.download_count.toLocaleString()} downloads
-        </div>
-      )}
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {plugin.download_count != null ? plugin.download_count.toLocaleString() : '0'}
+          </span>
+        </span>
+        <span style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          fontSize: '13px',
+          color: 'var(--color-text-muted)',
+        }}>
+          <Star size={13} style={{ fill: 'currentColor' }} />
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {plugin.stargazers_count >= 0 ? plugin.stargazers_count.toLocaleString() : '0'}
+          </span>
+        </span>
+      </div>
     </Link>
   );
 }
