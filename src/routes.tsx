@@ -6,7 +6,6 @@ import { PluginDetail } from '@/pages/PluginDetail';
 import { AboutPage } from '@/pages/AboutPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { LoginPage } from '@/pages/LoginPage';
-import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { SubmitPage } from '@/pages/SubmitPage';
 import { RequireAuth } from '@/components/RequireAuth';
 
@@ -21,7 +20,7 @@ const router = createBrowserRouter([
       { path: 'plugins/:slug', element: <PluginDetail /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'login', element: <LoginPage /> },
-      { path: 'auth', element: <AuthCallbackPage /> },
+      { path: 'auth', element: <Navigate to="/login" replace /> },
       {
         path: 'submit',
         element: (

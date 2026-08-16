@@ -6,6 +6,10 @@
  *  2. GitHub redirects back to /?code=...&state=...
  *  3. handleOAuthCallback(code, state) → exchanges code for token → returns user
  *
+ * Token exchange uses application/x-www-form-urlencoded (not JSON) so the browser
+ * does NOT send a CORS preflight OPTIONS request. GitHub's token endpoint allows
+ * simple POSTs without preflight.
+ *
  * Security contract:
  *  • PKCE verifier only in sessionStorage (ephemeral, cleared on tab close)
  *  • State parameter for CSRF protection
@@ -23,7 +27,7 @@ import {
 } from '@/config/github';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce';
 
-/** Normalised GitHub user profile. */
+/** Normalised GitHub user profile */
 export interface GitHubUser {
   login: string;
   id: number;
@@ -64,7 +68,6 @@ export async function startOAuthLogin(): Promise<void> {
     state,
   });
 
-  console.log('[OAuth] Redirecting to GitHub:', `${GITHUB_OAUTH_URL}?${params}`);
   window.location.href = `${GITHUB_OAUTH_URL}?${params}`;
 }
 
@@ -72,20 +75,17 @@ export async function startOAuthLogin(): Promise<void> {
 
 /**
  * Handle the OAuth callback — validate state, exchange code for token, return user.
+ * Uses form-urlencoded body so no CORS preflight is sent.
  */
 export async function handleOAuthCallback(
   code: string,
   state: string
 ): Promise<GitHubUser> {
-  console.log('[OAuth] Handling callback, code:', code.substring(0, 10) + '...');
-
   // 1. Validate state (CSRF protection)
   const storedState = sessionStorage.getItem('oauth_state');
   const storedVerifier = sessionStorage.getItem('oauth_verifier');
   sessionStorage.removeItem('oauth_state');
   sessionStorage.removeItem('oauth_verifier');
-
-  console.log('[OAuth] State validation:', { received: state, stored: storedState, hasVerifier: !!storedVerifier });
 
   if (!state || state !== storedState) {
     throw new Error('OAuth state mismatch (CSRF protection)');
@@ -95,31 +95,29 @@ export async function handleOAuthCallback(
   }
 
   // 2. Exchange code for token
-  console.log('[OAuth] Exchanging code for token...');
+  // Use URLSearchParams for form-urlencoded body — NO CORS preflight
+  const body = new URLSearchParams({
+    client_id: GITHUB_CLIENT_ID,
+    code,
+    code_verifier: storedVerifier,
+    redirect_uri: GITHUB_CALLBACK_URL,
+  }).toString();
+
   const tokenRes = await fetch(GITHUB_TOKEN_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      // form-urlencoded → browser sends simple request, NO OPTIONS preflight
+      'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'application/json',
     },
-    body: JSON.stringify({
-      client_id: GITHUB_CLIENT_ID,
-      code,
-      code_verifier: storedVerifier,
-      redirect_uri: GITHUB_CALLBACK_URL,
-    }),
+    body,
   });
 
-  console.log('[OAuth] Token response status:', tokenRes.status);
-
   if (!tokenRes.ok) {
-    const text = await tokenRes.text();
-    console.error('[OAuth] Token exchange failed:', tokenRes.status, text);
     throw new Error('Token exchange failed');
   }
 
   const tokenData: TokenResponse = await tokenRes.json();
-  console.log('[OAuth] Token response:', { hasToken: !!tokenData.access_token, scope: tokenData.scope, error: tokenData.error });
 
   if (tokenData.error) {
     throw new Error(`OAuth error: ${tokenData.error_description || tokenData.error}`);
@@ -131,7 +129,6 @@ export async function handleOAuthCallback(
   }
 
   // 3. Fetch user info
-  console.log('[OAuth] Fetching user info...');
   const userRes = await fetch(GITHUB_API_USER, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -140,15 +137,9 @@ export async function handleOAuthCallback(
     },
   });
 
-  console.log('[OAuth] User response status:', userRes.status);
-
   if (!userRes.ok) {
-    const text = await userRes.text();
-    console.error('[OAuth] User fetch failed:', userRes.status, text);
     throw new Error('Failed to fetch user info');
   }
 
-  const user = await userRes.json() as GitHubUser;
-  console.log('[OAuth] User logged in:', user.login);
-  return user;
+  return userRes.json() as Promise<GitHubUser>;
 }

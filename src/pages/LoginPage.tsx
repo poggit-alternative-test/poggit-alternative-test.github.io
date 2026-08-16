@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -8,10 +8,9 @@ import { useTheme } from '@/contexts/ThemeContext';
  * /login — entry point for GitHub OAuth authentication.
  */
 export function LoginPage() {
-  const { status, login } = useAuth();
+  const { status, statusMessage, login } = useAuth();
   const { colors } = useTheme();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Once authenticated, redirect home.
   useEffect(() => {
@@ -19,13 +18,6 @@ export function LoginPage() {
       navigate('/', { replace: true });
     }
   }, [status, navigate]);
-
-  const error = searchParams.get('error');
-  const errorMessages: Record<string, string> = {
-    auth_failed: 'Authentication failed. Please try again.',
-    missing_params: 'Authentication was interrupted. Please try again.',
-    state_mismatch: 'Security check failed. Please try again.',
-  };
 
   return (
     <div
@@ -71,8 +63,27 @@ export function LoginPage() {
           gap: '24px',
         }}
       >
+        {/* Status message */}
+        {statusMessage && (
+          <div
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              backgroundColor: colors.card,
+              border: `1px solid ${colors.border}`,
+              fontSize: '13px',
+              color: colors.textSecondary,
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            {statusMessage}
+          </div>
+        )}
+
         {/* Error */}
-        {error && (
+        {status === 'error' && (
           <div
             style={{
               width: '100%',
@@ -85,43 +96,45 @@ export function LoginPage() {
               textAlign: 'center',
             }}
           >
-            {errorMessages[error] ?? 'Authentication failed. Please try again.'}
+            {statusMessage || 'Authentication failed. Please try again.'}
           </div>
         )}
 
         {/* Auth button */}
-        <button
-          onClick={login}
-          disabled={status === 'authenticating'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '12px 24px',
-            borderRadius: '10px',
-            border: 'none',
-            backgroundColor: colors.brand,
-            color: '#FFFFFF',
-            fontSize: '15px',
-            fontWeight: 600,
-            cursor: status === 'authenticating' ? 'default' : 'pointer',
-            opacity: status === 'authenticating' ? 0.7 : 1,
-            transition: 'opacity 0.15s ease',
-            width: '100%',
-            justifyContent: 'center',
-          }}
-          onMouseEnter={(e) => {
-            if (status !== 'authenticating') {
-              e.currentTarget.style.opacity = '0.9';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = status === 'authenticating' ? '0.7' : '1';
-          }}
-        >
-          <GitHubIcon size={18} />
-          {status === 'authenticating' ? 'Redirecting…' : 'Login with GitHub'}
-        </button>
+        {status !== 'authenticated' && (
+          <button
+            onClick={login}
+            disabled={status === 'authenticating'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 24px',
+              borderRadius: '10px',
+              border: 'none',
+              backgroundColor: colors.brand,
+              color: '#FFFFFF',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: status === 'authenticating' ? 'default' : 'pointer',
+              opacity: status === 'authenticating' ? 0.7 : 1,
+              transition: 'opacity 0.15s ease',
+              width: '100%',
+              justifyContent: 'center',
+            }}
+            onMouseEnter={(e) => {
+              if (status !== 'authenticating') {
+                e.currentTarget.style.opacity = '0.9';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = status === 'authenticating' ? '0.7' : '1';
+            }}
+          >
+            <GitHubIcon size={18} />
+            {status === 'authenticating' ? 'Redirecting…' : 'Login with GitHub'}
+          </button>
+        )}
       </div>
 
       {/* Privacy note */}

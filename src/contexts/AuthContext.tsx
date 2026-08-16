@@ -11,18 +11,17 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { GitHubUser } from '@/lib/auth';
 
-/** Authentication status of the current session. */
+/** Authentication status of the current session */
 export type AuthStatus = 'idle' | 'authenticating' | 'authenticated' | 'error';
 
 interface AuthContextValue {
   status: AuthStatus;
+  statusMessage: string;
   user: GitHubUser | null;
   userLogin: string | null;
   userAvatar: string | null;
   /** Start the GitHub OAuth + PKCE flow (redirects to GitHub) */
   login: () => void;
-  /** Set the authenticated user */
-  setUser: (user: GitHubUser) => void;
   /** Clear the token and user from memory */
   logout: () => void;
   /** Clear the error state and return to idle */
@@ -33,9 +32,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
   const [user, setUserState] = useState<GitHubUser | null>(null);
 
-  // Check URL for OAuth callback params on mount
+  // Handle OAuth callback on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -43,28 +43,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const error = params.get('error');
     const errorDescription = params.get('error_description');
 
-    console.log('[AuthContext] Mount check:', { hasCode: !!code, hasState: !!state, error, errorDescription });
-
     if (error) {
-      console.log('[AuthContext] OAuth error from GitHub:', error, errorDescription);
+      setStatus('error');
+      setStatusMessage(errorDescription || error);
       window.history.replaceState({}, '', '/login');
-      window.location.href = `/login?error=${encodeURIComponent(errorDescription || error)}`;
       return;
     }
 
     if (code && state) {
+      setStatus('authenticating');
+      setStatusMessage('Completing sign-in…');
+
       import('@/lib/auth').then(({ handleOAuthCallback }) => {
         handleOAuthCallback(code, state)
           .then((u) => {
-            console.log('[AuthContext] OAuth success, user:', u?.login);
             setUserState(u);
             setStatus('authenticated');
+            setStatusMessage('');
             window.history.replaceState({}, '', '/');
           })
           .catch((err) => {
-            console.error('[AuthContext] OAuth callback failed:', err);
+            setStatus('error');
+            setStatusMessage(err instanceof Error ? err.message : 'Authentication failed');
             window.history.replaceState({}, '', '/login');
-            window.location.href = `/login?error=${encodeURIComponent(err instanceof Error ? err.message : 'auth_failed')}`;
           });
       });
     }
@@ -78,32 +79,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus('idle');
     }).catch(() => {
       setStatus('error');
+      setStatusMessage('Failed to start login');
     });
-  }, []);
-
-  const setUser = useCallback((u: GitHubUser) => {
-    setUserState(u);
-    setStatus('authenticated');
   }, []);
 
   const logout = useCallback(() => {
     setUserState(null);
     setStatus('idle');
+    setStatusMessage('');
   }, []);
 
   const clearError = useCallback(() => {
     setStatus('idle');
+    setStatusMessage('');
   }, []);
 
   return (
     <AuthContext.Provider
       value={{
         status,
+        statusMessage,
         user,
         userLogin: user?.login ?? null,
         userAvatar: user?.avatar_url ?? null,
         login,
-        setUser,
         logout,
         clearError,
       }}
