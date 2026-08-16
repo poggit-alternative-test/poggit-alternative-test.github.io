@@ -3,7 +3,7 @@
  *
  * Flow:
  *  1. startOAuthLogin() → generates verifier + challenge + state → redirects to GitHub
- *  2. GitHub redirects back to /auth/callback?code=...&state=...
+ *  2. GitHub redirects back to /?code=...&state=...
  *  3. handleOAuthCallback(code, state) → exchanges code for token → returns user
  *
  * Security contract:
@@ -14,12 +14,12 @@
  */
 
 import {
+  GITHUB_CLIENT_ID,
   GITHUB_OAUTH_URL,
   GITHUB_TOKEN_URL,
   GITHUB_API_USER,
   GITHUB_CALLBACK_URL,
   GITHUB_SCOPES,
-  GITHUB_CLIENT_ID,
 } from '@/config/github';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce';
 
@@ -36,6 +36,8 @@ interface TokenResponse {
   access_token: string;
   token_type: string;
   scope: string;
+  error?: string;
+  error_description?: string;
 }
 
 // ── Step 1: redirect to GitHub ────────────────────────────────────────────────
@@ -62,24 +64,28 @@ export async function startOAuthLogin(): Promise<void> {
     state,
   });
 
+  console.log('[OAuth] Redirecting to GitHub:', `${GITHUB_OAUTH_URL}?${params}`);
   window.location.href = `${GITHUB_OAUTH_URL}?${params}`;
 }
 
-// ── Step 2: exchange code for token ──────────────────────────────────────────
+// ── Step 2: exchange code for token ────────────────────────────────────────
 
 /**
  * Handle the OAuth callback — validate state, exchange code for token, return user.
- * Call this from the /auth/callback page.
  */
 export async function handleOAuthCallback(
   code: string,
   state: string
 ): Promise<GitHubUser> {
+  console.log('[OAuth] Handling callback, code:', code.substring(0, 10) + '...');
+
   // 1. Validate state (CSRF protection)
   const storedState = sessionStorage.getItem('oauth_state');
   const storedVerifier = sessionStorage.getItem('oauth_verifier');
   sessionStorage.removeItem('oauth_state');
   sessionStorage.removeItem('oauth_verifier');
+
+  console.log('[OAuth] State validation:', { received: state, stored: storedState, hasVerifier: !!storedVerifier });
 
   if (!state || state !== storedState) {
     throw new Error('OAuth state mismatch (CSRF protection)');
@@ -89,6 +95,7 @@ export async function handleOAuthCallback(
   }
 
   // 2. Exchange code for token
+  console.log('[OAuth] Exchanging code for token...');
   const tokenRes = await fetch(GITHUB_TOKEN_URL, {
     method: 'POST',
     headers: {
@@ -103,18 +110,28 @@ export async function handleOAuthCallback(
     }),
   });
 
+  console.log('[OAuth] Token response status:', tokenRes.status);
+
   if (!tokenRes.ok) {
+    const text = await tokenRes.text();
+    console.error('[OAuth] Token exchange failed:', tokenRes.status, text);
     throw new Error('Token exchange failed');
   }
 
   const tokenData: TokenResponse = await tokenRes.json();
-  const accessToken = tokenData.access_token;
+  console.log('[OAuth] Token response:', { hasToken: !!tokenData.access_token, scope: tokenData.scope, error: tokenData.error });
 
+  if (tokenData.error) {
+    throw new Error(`OAuth error: ${tokenData.error_description || tokenData.error}`);
+  }
+
+  const accessToken = tokenData.access_token;
   if (!accessToken) {
     throw new Error('No access token received');
   }
 
   // 3. Fetch user info
+  console.log('[OAuth] Fetching user info...');
   const userRes = await fetch(GITHUB_API_USER, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -123,9 +140,15 @@ export async function handleOAuthCallback(
     },
   });
 
+  console.log('[OAuth] User response status:', userRes.status);
+
   if (!userRes.ok) {
+    const text = await userRes.text();
+    console.error('[OAuth] User fetch failed:', userRes.status, text);
     throw new Error('Failed to fetch user info');
   }
 
-  return userRes.json() as Promise<GitHubUser>;
+  const user = await userRes.json() as GitHubUser;
+  console.log('[OAuth] User logged in:', user.login);
+  return user;
 }

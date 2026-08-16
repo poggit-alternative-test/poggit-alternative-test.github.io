@@ -43,7 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const error = params.get('error');
     const errorDescription = params.get('error_description');
 
+    console.log('[AuthContext] Mount check:', { hasCode: !!code, hasState: !!state, error, errorDescription });
+
     if (error) {
+      console.log('[AuthContext] OAuth error from GitHub:', error, errorDescription);
       window.history.replaceState({}, '', '/login');
       window.location.href = `/login?error=${encodeURIComponent(errorDescription || error)}`;
       return;
@@ -53,12 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       import('@/lib/auth').then(({ handleOAuthCallback }) => {
         handleOAuthCallback(code, state)
           .then((u) => {
+            console.log('[AuthContext] OAuth success, user:', u?.login);
             setUserState(u);
             setStatus('authenticated');
             window.history.replaceState({}, '', '/');
           })
           .catch((err) => {
-            console.error('OAuth failed:', err);
+            console.error('[AuthContext] OAuth callback failed:', err);
             window.history.replaceState({}, '', '/login');
             window.location.href = `/login?error=${encodeURIComponent(err instanceof Error ? err.message : 'auth_failed')}`;
           });
