@@ -11,5 +11,4 @@
  * If TURNSTILE_SITE_KEY is empty/placeholder, bot protection is skipped.
  */
 
-export const TURNSTILE_SITE_KEY =
-  import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAERUwiR8_CrLuboi';
