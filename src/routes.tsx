@@ -5,9 +5,6 @@ import { SearchPage } from '@/pages/SearchPage';
 import { PluginDetail } from '@/pages/PluginDetail';
 import { AboutPage } from '@/pages/AboutPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { LoginPage } from '@/pages/LoginPage';
-import { SubmitPage } from '@/pages/SubmitPage';
-import { RequireAuth } from '@/components/RequireAuth';
 
 const router = createBrowserRouter([
   {
@@ -19,16 +16,6 @@ const router = createBrowserRouter([
       { path: 'search', element: <Navigate to="/plugins" replace /> },
       { path: 'plugins/:slug', element: <PluginDetail /> },
       { path: 'about', element: <AboutPage /> },
-      { path: 'login', element: <LoginPage /> },
-      { path: 'auth', element: <Navigate to="/login" replace /> },
-      {
-        path: 'submit',
-        element: (
-          <RequireAuth>
-            <SubmitPage />
-          </RequireAuth>
-        ),
-      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

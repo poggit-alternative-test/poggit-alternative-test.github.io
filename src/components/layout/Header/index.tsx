@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Search, Menu, X, Package, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { AuthButton } from '@/components/AuthButton';
 
 export function Header() {
   const { colors, resolvedMode, toggleMode } = useTheme();
@@ -114,9 +113,6 @@ export function Header() {
           >
             {resolvedMode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-
-          {/* Auth button */}
-          <AuthButton />
 
           {/* Mobile hamburger — hidden on desktop (≥1024px) via CSS */}
           <button

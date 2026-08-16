@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Package, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Package, Shield, Zap, Github } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent, Button } from '@/components/ui';
 
@@ -36,7 +36,7 @@ export function HomePage() {
           Every plugin is validated for safety before being listed.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/search">
+          <Link to="/plugins">
             <Button size="lg" rightIcon={<ArrowRight size={16} />}>
               Browse Plugins
             </Button>
@@ -131,7 +131,7 @@ export function HomePage() {
               Open Registry
             </h3>
             <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6 }}>
-              The plugin index is stored in a public GitHub repository. Submit your plugin through a GitHub Issue.
+              The plugin index is stored in a public GitHub repository. Submit your plugin via Pull Request.
             </p>
           </CardContent>
         </Card>
@@ -143,15 +143,28 @@ export function HomePage() {
           Submit your plugin
         </h2>
         <p style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '24px', maxWidth: '440px', margin: '0 auto 24px' }}>
-          Have a PocketMine-MP plugin? Get it listed by opening a validation issue on GitHub.
+          Have a PocketMine-MP plugin? Fork the registry repo, add your plugin entry, and open a Pull Request.
         </p>
-        <a
-          href="https://github.com/axolotl-pm/plugin-registry/issues/new?template=submit-plugin.yml"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button rightIcon={<ArrowRight size={14} />}>Open Submission Issue</Button>
-        </a>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="https://github.com/axolotl-pm/plugin-registry/fork"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="secondary" leftIcon={<Github size={16} />}>
+              Fork Registry
+            </Button>
+          </a>
+          <a
+            href="https://github.com/axolotl-pm/plugin-registry/blob/main/CONTRIBUTING.md"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button rightIcon={<ArrowRight size={14} />}>
+              Submission Guide
+            </Button>
+          </a>
+        </div>
       </section>
     </div>
   );
