@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Github, Download, ArrowLeft, AlertCircle, Loader2, ChevronDown, Star } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Badge } from '@/components/Badge';
+import { Badge, FeaturedBadge, ForkBadge } from '@/components/Badge';
 import { CATEGORY_LABELS } from '@/types/plugin';
 import { resolveIconUrl } from '@/lib/iconResolver';
 import { useRegistry } from '@/hooks/useRegistry';
@@ -212,6 +212,8 @@ export function PluginDetail() {
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {plugin.featured && <FeaturedBadge />}
+                {plugin.fork && <ForkBadge forkedFrom={plugin.forked_from} />}
                 <Badge tier={plugin.build_tier} />
                 <span style={{
                   borderRadius: '9999px',
@@ -463,6 +465,9 @@ export function PluginDetail() {
                 { label: 'Authors', value: plugin.author.join(', ') },
                 { label: 'Build', value: plugin.build_tier ?? 'unknown' },
                 { label: 'Tags', value: `${(plugin.all_tags ?? []).length} submitted` },
+                ...(plugin.fork && plugin.forked_from
+                  ? [{ label: 'Forked from', value: plugin.forked_from }]
+                  : []),
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '12px', color: colors.textMuted }}>{label}</span>

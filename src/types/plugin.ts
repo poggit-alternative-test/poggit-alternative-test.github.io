@@ -112,6 +112,12 @@ export interface PluginEntry {
 
   /** User-submitted keywords for search. */
   keywords: string[];
+
+  /** True if this plugin was submitted from a fork. */
+  fork: boolean;
+
+  /** The original repository this plugin was forked from. */
+  forked_from: string | null;
 }
 
 /** All accepted category values */
