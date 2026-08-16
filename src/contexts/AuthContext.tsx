@@ -8,7 +8,7 @@
  *  • Logout clears the token immediately from memory.
  */
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { GitHubUser } from '@/lib/auth';
 
 /** Authentication status of the current session */
@@ -35,18 +35,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [statusMessage, setStatusMessage] = useState('');
   const [user, setUserState] = useState<GitHubUser | null>(null);
 
+  // Guard: only process OAuth callback once (prevents double-invoke in StrictMode)
+  const callbackProcessedRef = useRef(false);
+
   // Handle OAuth callback on mount
   useEffect(() => {
+    if (callbackProcessedRef.current) return;
+    callbackProcessedRef.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const state = params.get('state');
     const error = params.get('error');
     const errorDescription = params.get('error_description');
 
+    // Clear URL params immediately (before any async work)
+    if (code || state || error) {
+      window.history.replaceState({}, '', '/');
+    }
+
     if (error) {
       setStatus('error');
       setStatusMessage(errorDescription || error);
-      window.history.replaceState({}, '', '/login');
       return;
     }
 
@@ -60,12 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUserState(u);
             setStatus('authenticated');
             setStatusMessage('');
-            window.history.replaceState({}, '', '/');
           })
           .catch((err) => {
             setStatus('error');
             setStatusMessage(err instanceof Error ? err.message : 'Authentication failed');
-            window.history.replaceState({}, '', '/login');
           });
       });
     }
@@ -75,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus('authenticating');
     import('@/lib/auth').then(({ startOAuthLogin }) => {
       startOAuthLogin();
-      // After redirect, useEffect handles the callback.
       setStatus('idle');
     }).catch(() => {
       setStatus('error');
