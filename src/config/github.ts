@@ -4,7 +4,7 @@
  * PKCE OAuth 2.0 Authorization Code Flow.
  * Token exchange is proxied through a Cloudflare Worker to avoid CORS issues.
  */
-export const GITHUB_CLIENT_ID = 'Iv23liA6vrsnFbgUtBfh';
+export const GITHUB_CLIENT_ID = 'Ov23liODNd3WGbyrVkfM';
 
 /** GitHub OAuth endpoints */
 export const GITHUB_OAUTH_URL = 'https://github.com/login/oauth/authorize';
