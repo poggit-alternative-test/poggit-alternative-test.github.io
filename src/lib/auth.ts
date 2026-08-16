@@ -4,11 +4,10 @@
  * Flow:
  *  1. startOAuthLogin() → generates verifier + challenge + state → redirects to GitHub
  *  2. GitHub redirects back to /?code=...&state=...
- *  3. handleOAuthCallback(code, state) → exchanges code for token → returns user
+ *  3. handleOAuthCallback(code, state) → worker proxy → GitHub token → user
  *
- * Token exchange uses application/x-www-form-urlencoded (not JSON) so the browser
- * does NOT send a CORS preflight OPTIONS request. GitHub's token endpoint allows
- * simple POSTs without preflight.
+ * The token exchange goes through a Cloudflare Worker to avoid CORS issues
+ * (GitHub's token endpoint doesn't support CORS).
  *
  * Security contract:
  *  • PKCE verifier only in sessionStorage (ephemeral, cleared on tab close)
@@ -20,9 +19,9 @@
 import {
   GITHUB_CLIENT_ID,
   GITHUB_OAUTH_URL,
-  GITHUB_TOKEN_URL,
   GITHUB_API_USER,
   GITHUB_CALLBACK_URL,
+  OAUTH_PROXY_URL,
   GITHUB_SCOPES,
 } from '@/config/github';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce';
@@ -48,7 +47,6 @@ interface TokenResponse {
 
 /**
  * Redirect the browser to GitHub's OAuth authorization page.
- * Stores verifier and state in sessionStorage for the callback.
  */
 export async function startOAuthLogin(): Promise<void> {
   const verifier = generateCodeVerifier();
@@ -71,11 +69,42 @@ export async function startOAuthLogin(): Promise<void> {
   window.location.href = `${GITHUB_OAUTH_URL}?${params}`;
 }
 
-// ── Step 2: exchange code for token ────────────────────────────────────────
+// ── Step 2: exchange code for token ──────────────────────────────────────────
+
+/**
+ * Exchange the authorization code for an access token via the Cloudflare Worker proxy.
+ * Includes the Turnstile token for bot protection.
+ */
+async function exchangeCodeForToken(code: string, verifier: string): Promise<TokenResponse> {
+  const turnstileToken = sessionStorage.getItem('turnstile_token');
+
+  const body: Record<string, string> = {
+    code,
+    verifier,
+    redirect_uri: GITHUB_CALLBACK_URL,
+  };
+  if (turnstileToken) {
+    body.turnstile_token = turnstileToken;
+    sessionStorage.removeItem('turnstile_token');
+  }
+
+  const res = await fetch(`${OAUTH_PROXY_URL}/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (res.status === 403) {
+    throw new Error('Verification failed. Please refresh and try again.');
+  }
+
+  return res.json() as Promise<TokenResponse>;
+}
+
+// ── Step 3: handle callback ───────────────────────────────────────────────────
 
 /**
  * Handle the OAuth callback — validate state, exchange code for token, return user.
- * Uses form-urlencoded body so no CORS preflight is sent.
  */
 export async function handleOAuthCallback(
   code: string,
@@ -94,30 +123,8 @@ export async function handleOAuthCallback(
     throw new Error('Missing PKCE verifier — session may have expired');
   }
 
-  // 2. Exchange code for token
-  // Use URLSearchParams for form-urlencoded body — NO CORS preflight
-  const body = new URLSearchParams({
-    client_id: GITHUB_CLIENT_ID,
-    code,
-    code_verifier: storedVerifier,
-    redirect_uri: GITHUB_CALLBACK_URL,
-  }).toString();
-
-  const tokenRes = await fetch(GITHUB_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      // form-urlencoded → browser sends simple request, NO OPTIONS preflight
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'application/json',
-    },
-    body,
-  });
-
-  if (!tokenRes.ok) {
-    throw new Error('Token exchange failed');
-  }
-
-  const tokenData: TokenResponse = await tokenRes.json();
+  // 2. Exchange code for token via proxy
+  const tokenData = await exchangeCodeForToken(code, storedVerifier);
 
   if (tokenData.error) {
     throw new Error(`OAuth error: ${tokenData.error_description || tokenData.error}`);

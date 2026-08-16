@@ -1,16 +1,39 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
+import { TURNSTILE_SITE_KEY } from '@/config/turnstile';
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          'error-callback'?: () => void;
+          theme?: 'light' | 'dark' | 'auto';
+          size?: 'normal' | 'compact' | 'invisible';
+        }
+      ) => string;
+      reset: (widgetId: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
 
 /**
  * /login — entry point for GitHub OAuth authentication.
+ * Protected by Cloudflare Turnstile (invisible bot check).
  */
 export function LoginPage() {
   const { status, statusMessage, login } = useAuth();
   const { colors } = useTheme();
   const navigate = useNavigate();
+  const turnstileRef = useRef<string | null>(null);
+  const scriptLoadedRef = useRef(false);
 
   // Once authenticated, redirect home.
   useEffect(() => {
@@ -18,6 +41,55 @@ export function LoginPage() {
       navigate('/', { replace: true });
     }
   }, [status, navigate]);
+
+  // Load Turnstile script once (only if configured)
+  useEffect(() => {
+    if (scriptLoadedRef.current || !TURNSTILE_SITE_KEY) return;
+    scriptLoadedRef.current = true;
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
+
+  // Render Turnstile widget after script loads (only if configured)
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || !window.turnstile) return;
+
+    const widgetId = window.turnstile.render('#turnstile-container', {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token: string) => {
+        // Store token for the login flow
+        sessionStorage.setItem('turnstile_token', token);
+      },
+      'error-callback': () => {
+        sessionStorage.removeItem('turnstile_token');
+      },
+      theme: colors.bg === '#09090B' ? 'dark' : 'light',
+      size: 'invisible',
+    });
+
+    turnstileRef.current = widgetId;
+    return () => {
+      if (turnstileRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileRef.current);
+      }
+    };
+  }, [colors]);
+
+  const handleLogin = () => {
+    // Verify Turnstile token exists before starting OAuth
+    if (TURNSTILE_SITE_KEY) {
+      const turnstileToken = sessionStorage.getItem('turnstile_token');
+      if (!turnstileToken) {
+        alert('Verification failed. Please refresh and try again.');
+        return;
+      }
+    }
+    login();
+  };
 
   return (
     <div
@@ -63,6 +135,11 @@ export function LoginPage() {
           gap: '24px',
         }}
       >
+        {/* Turnstile widget container (invisible, only if configured) */}
+        {!!TURNSTILE_SITE_KEY && (
+          <div id="turnstile-container" style={{ minHeight: '65px' }} />
+        )}
+
         {/* Status message */}
         {statusMessage && (
           <div
@@ -103,7 +180,7 @@ export function LoginPage() {
         {/* Auth button */}
         {status !== 'authenticated' && (
           <button
-            onClick={login}
+            onClick={handleLogin}
             disabled={status === 'authenticating'}
             style={{
               display: 'flex',
