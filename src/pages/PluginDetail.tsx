@@ -257,6 +257,12 @@ export function PluginDetail() {
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {(plugin.download_count != null ? plugin.download_count : 0).toLocaleString()}
+                    {plugin.download_total != null && plugin.download_total !== plugin.download_count && (
+                      <span style={{ color: colors.textMuted }}>
+                        {' '}/{' '}
+                        <span style={{ opacity: 0.7 }}>{plugin.download_total.toLocaleString()}</span>
+                      </span>
+                    )}
                   </span>
                   <span style={{ fontSize: '13px', color: colors.textMuted }}>downloads</span>
                 </div>

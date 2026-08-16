@@ -160,6 +160,12 @@ export function PluginCard({ plugin }: PluginCardProps) {
           <Download size={13} />
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>
             {plugin.download_count != null ? plugin.download_count.toLocaleString() : '0'}
+            {plugin.download_total != null && plugin.download_total !== plugin.download_count && (
+              <span style={{ color: 'var(--color-text-muted)' }}>
+                {' '}/{' '}
+                <span style={{ opacity: 0.7 }}>{plugin.download_total.toLocaleString()}</span>
+              </span>
+            )}
           </span>
         </span>
         <span style={{

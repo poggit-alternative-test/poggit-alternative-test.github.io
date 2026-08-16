@@ -80,6 +80,12 @@ export interface PluginEntry {
   /** Total GitHub Release asset download count, null if unavailable */
   download_count: number | null;
 
+  /**
+   * Cumulative download count across all stable releases submitted and approved.
+   * Useful for showing total plugin popularity regardless of version.
+   */
+  download_total: number | null;
+
   /** GitHub repository star count, defaults to 0 if not available */
   stargazers_count: number;
 
