@@ -140,7 +140,7 @@ export type PluginCategory =
   | 'misc';
 
 /** Build tier / badge values */
-export type BuildTier = 'verified' | 'built-via-ci' | 'unverified' | null;
+export type BuildTier = 'verified' | 'unverified' | null;
 
 /** Human-readable label for each category */
 export const CATEGORY_LABELS: Record<PluginCategory, string> = {

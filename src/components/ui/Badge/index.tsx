@@ -1,8 +1,8 @@
 import type { BuildTier } from '@/types/plugin';
 import type { HTMLAttributes } from 'react';
-import { CheckCircle2, Cpu, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
-export type BadgeVariant = 'verified' | 'built' | 'unverified' | 'info' | 'warning';
+export type BadgeVariant = 'verified' | 'unverified' | 'info' | 'warning';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -13,11 +13,6 @@ const variantStyles: Record<BadgeVariant, { bg: string; color: string; border: s
     bg: '#D1FAE5',
     color: '#065F46',
     border: '#6EE7B7',
-  },
-  built: {
-    bg: '#DBEAFE',
-    color: '#1E40AF',
-    border: '#93C5FD',
   },
   unverified: {
     bg: '#FEF3C7',
@@ -72,13 +67,6 @@ export function StatusBadge({ status }: { status: BuildTier | null }) {
         <Badge variant="verified">
           <CheckCircle2 size={12} />
           Verified build
-        </Badge>
-      );
-    case 'built-via-ci':
-      return (
-        <Badge variant="built">
-          <Cpu size={12} />
-          Built via CI
         </Badge>
       );
     case 'unverified':

@@ -1,4 +1,4 @@
-import { CheckCircle2, Cpu, AlertTriangle, Star, GitFork } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Star, GitFork } from 'lucide-react';
 import type { BuildTier } from '../types/plugin';
 
 /**
@@ -30,29 +30,6 @@ export function Badge({ tier }: { tier: BuildTier }) {
         >
           <CheckCircle2 size={12} />
           Verified
-        </span>
-      );
-    case 'built-via-ci':
-      return (
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            borderRadius: '9999px',
-            paddingLeft: '8px',
-            paddingRight: '8px',
-            paddingTop: '2px',
-            paddingBottom: '2px',
-            fontSize: '11px',
-            fontWeight: 500,
-            backgroundColor: '#DBEAFE',
-            color: '#1E40AF',
-            border: '1px solid #93C5FD',
-          }}
-        >
-          <Cpu size={12} />
-          Built via CI
         </span>
       );
     case 'unverified':
